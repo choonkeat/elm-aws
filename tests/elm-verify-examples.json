@@ -1,0 +1,7 @@
+{
+  "root": "../src",
+  "tests": [
+      "AWS.Internal",
+      "AWS.DynamoDB"
+   ]
+}

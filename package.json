@@ -1,0 +1,19 @@
+{
+  "name": "elm-aws",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "elm-test": "^0.19.1-revision2",
+    "elm-verify-examples": "^5.0.0"
+  },
+  "scripts": {
+    "test": "elm-verify-examples -r"
+  },
+  "author": "",
+  "license": "ISC"
+}
