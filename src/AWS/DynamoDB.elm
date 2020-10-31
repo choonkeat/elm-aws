@@ -449,7 +449,7 @@ encodeQueryResponse encoder v =
         ]
 
 
-{-| for putting json objects into `payload`
+{-| wrapper type to store data as a String in a dynamodb column
 -}
 type JsonEncoded a
     = JsonEncoded a
@@ -459,13 +459,13 @@ type JsonEncoded a
 encodeJsonEncoded : (a -> Json.Encode.Value) -> JsonEncoded a -> Json.Encode.Value
 encodeJsonEncoded encoder (JsonEncoded a) =
     Json.Encode.encode 0 (encoder a)
-        |> Json.Encode.string
+        |> encodeS
 
 
 {-| -}
 decodeJsonEncoded : Json.Decode.Decoder a -> Json.Decode.Decoder (JsonEncoded a)
 decodeJsonEncoded decoder =
-    Json.Decode.string
+    decodeS
         |> Json.Decode.andThen
             (\s ->
                 case Json.Decode.decodeString decoder s of
