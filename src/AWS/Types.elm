@@ -22,6 +22,7 @@ type alias Config =
 type Service
     = ServiceIam
     | ServiceDynamoDB
+    | ServiceSES
 
 
 {-| -}

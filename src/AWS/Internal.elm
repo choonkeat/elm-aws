@@ -6,6 +6,7 @@ import Crypto.HMAC
 import Crypto.Hash
 import DateFormat
 import Http
+import Json.Decode
 import Json.Encode
 import Task exposing (Task)
 import Time
@@ -33,6 +34,9 @@ endpoint { service, awsRegion } =
         ServiceDynamoDB ->
             { urlWithoutRegion | host = serviceName service ++ "." ++ awsRegion ++ ".amazonaws.com" }
 
+        ServiceSES ->
+            { urlWithoutRegion | host = serviceName service ++ "." ++ awsRegion ++ ".amazonaws.com" }
+
 
 serviceName : Service -> String
 serviceName service =
@@ -42,6 +46,9 @@ serviceName service =
 
         ServiceDynamoDB ->
             "dynamodb"
+
+        ServiceSES ->
+            "email"
 
 
 algorithm =
@@ -239,6 +246,9 @@ canonicalHeaderKeys keyValues =
     awsPercentEncode "equal=sign"
     --> "equal%3Dsign"
 
+    awsPercentEncode "bob@example.com"
+    --> "bob%40example.com"
+
 -}
 awsPercentEncode : String -> String
 awsPercentEncode string =
@@ -248,3 +258,60 @@ awsPercentEncode string =
         |> String.replace "'" "%27"
         |> String.replace "(" "%28"
         |> String.replace ")" "%29"
+
+
+{-| If http response body does not contain expected String, return as Http.BadBody error
+-}
+stringMatchHttpResponse : String -> Http.Response String -> Result Http.Error ()
+stringMatchHttpResponse needle resp =
+    let
+        matchResult haystack =
+            if String.contains needle haystack then
+                Ok ()
+
+            else
+                Err (Http.BadBody ("[" ++ needle ++ "] not found: " ++ haystack))
+    in
+    case resp of
+        Http.GoodStatus_ m s ->
+            matchResult s
+
+        Http.BadUrl_ s ->
+            Err (Http.BadUrl s)
+
+        Http.Timeout_ ->
+            Err Http.Timeout
+
+        Http.NetworkError_ ->
+            Err Http.NetworkError
+
+        Http.BadStatus_ m s ->
+            Err (Http.BadStatus m.statusCode)
+
+
+{-| applies a json decoder to response of `Http.task`
+
+    Http.task
+        { resolver = Http.stringResolver (httpJsonBodyResolver thingDecoder)
+        , ...
+    }
+
+-}
+jsonDecodeHttpResponse : Json.Decode.Decoder a -> Http.Response String -> Result Http.Error a
+jsonDecodeHttpResponse decoder resp =
+    case resp of
+        Http.GoodStatus_ m s ->
+            Json.Decode.decodeString decoder s
+                |> Result.mapError (Json.Decode.errorToString >> Http.BadBody)
+
+        Http.BadUrl_ s ->
+            Err (Http.BadUrl s)
+
+        Http.Timeout_ ->
+            Err Http.Timeout
+
+        Http.NetworkError_ ->
+            Err Http.NetworkError
+
+        Http.BadStatus_ m s ->
+            Err (Http.BadStatus m.statusCode)
