@@ -292,17 +292,17 @@ stringMatchHttpResponse needle resp =
 {-| applies a json decoder to response of `Http.task`
 
     Http.task
-        { resolver = Http.stringResolver (httpJsonBodyResolver thingDecoder)
+        { resolver = Http.stringResolver (decodeHttpResponse (Json.Decode.decodeString thingDecoder) Json.Decode.errorToString)
         , ...
     }
 
 -}
-jsonDecodeHttpResponse : Json.Decode.Decoder a -> Http.Response String -> Result Http.Error a
-jsonDecodeHttpResponse decoder resp =
+decodeHttpResponse : (b -> Result e a) -> (e -> String) -> Http.Response b -> Result Http.Error a
+decodeHttpResponse decode errorToString resp =
     case resp of
         Http.GoodStatus_ m s ->
-            Json.Decode.decodeString decoder s
-                |> Result.mapError (Json.Decode.errorToString >> Http.BadBody)
+            decode s
+                |> Result.mapError (errorToString >> Http.BadBody)
 
         Http.BadUrl_ s ->
             Err (Http.BadUrl s)

@@ -2,6 +2,7 @@
   "root": "../src",
   "tests": [
       "AWS.Internal",
+      "AWS.SES",
       "AWS.DynamoDB"
    ]
 }

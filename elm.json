@@ -7,6 +7,7 @@
     "exposed-modules": [
         "AWS",
         "AWS.DynamoDB",
+        "AWS.SES",
         "AWS.Types"
     ],
     "elm-version": "0.19.1 <= v < 0.20.0",
@@ -19,7 +20,8 @@
         "ktonon/elm-crypto": "1.1.2 <= v < 2.0.0",
         "ktonon/elm-word": "2.1.2 <= v < 3.0.0",
         "ryannhg/date-format": "2.3.0 <= v < 3.0.0",
-        "waratuman/elm-coder": "3.0.1 <= v < 4.0.0"
+        "waratuman/elm-coder": "3.0.1 <= v < 4.0.0",
+        "ymtszw/elm-xml-decode": "3.2.1 <= v < 4.0.0"
     },
     "test-dependencies": {
         "elm-explorations/test": "1.2.2 <= v < 2.0.0"
