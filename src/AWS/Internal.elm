@@ -289,12 +289,21 @@ stringMatchHttpResponse needle resp =
             Err (Http.BadStatus m.statusCode)
 
 
-{-| applies a json decoder to response of `Http.task`
+{-| applies a decoder to response of `Http.task`
+
+To do JSON decoding:
 
     Http.task
         { resolver = Http.stringResolver (decodeHttpResponse (Json.Decode.decodeString thingDecoder) Json.Decode.errorToString)
         , ...
-    }
+        }
+
+To do XML decoding
+
+    Http.task
+        { resolver = Http.stringResolver (decodeHttpResponse (Xml.Decode.decodeString thingDecoder) identity)
+        , ...
+        }
 
 -}
 decodeHttpResponse : (b -> Result e a) -> (e -> String) -> Http.Response b -> Result Http.Error a
@@ -314,4 +323,6 @@ decodeHttpResponse decode errorToString resp =
             Err Http.NetworkError
 
         Http.BadStatus_ m s ->
-            Err (Http.BadStatus m.statusCode)
+            decode s
+                -- best effort attempt to decode the response body, but fallback to `Http.BadStatus`
+                |> Result.mapError (always (Http.BadStatus m.statusCode))
