@@ -64,7 +64,7 @@ signRequest :
     -> Time.Posix
     -> UnsignedRequest x a
     -> Result String (SignedRequest x a)
-signRequest config now { method, headers, query, stringBody, resolver, timeout } =
+signRequest config now { method, headers, query, stringBody, resolver, service } =
     let
         contentType =
             headers
@@ -78,6 +78,7 @@ signRequest config now { method, headers, query, stringBody, resolver, timeout }
         signatureResult =
             AWS.Internal.sign
                 config
+                service
                 now
                 { headers = headers
                 , method = method
@@ -116,7 +117,7 @@ signRequest config now { method, headers, query, stringBody, resolver, timeout }
                             Nothing
 
                 endpointUrl =
-                    AWS.Internal.endpoint config
+                    AWS.Internal.endpoint config service
                         |> (\url -> { url | query = queryParams })
                         |> Url.toString
 
@@ -126,7 +127,7 @@ signRequest config now { method, headers, query, stringBody, resolver, timeout }
                     , url = endpointUrl
                     , body = Http.stringBody contentType stringBody
                     , resolver = resolver
-                    , timeout = timeout
+                    , timeout = config.timeout
                     }
             in
             Ok signedRequest

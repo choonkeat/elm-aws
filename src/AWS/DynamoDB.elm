@@ -64,8 +64,6 @@ See <https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Attribut
 
 -}
 
-import AWS
-import AWS.Types
 import Base64
 import Dict exposing (Dict)
 import Http

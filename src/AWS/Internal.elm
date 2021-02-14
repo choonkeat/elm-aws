@@ -15,8 +15,8 @@ import Url.Builder
 import Word.Bytes
 
 
-endpoint : Config -> Url.Url
-endpoint { service, awsRegion } =
+endpoint : Config -> Service -> Url.Url
+endpoint { awsRegion } service =
     let
         urlWithoutRegion =
             { protocol = Url.Https
@@ -88,11 +88,12 @@ authorizationHeader config signature =
         { awsSecretAccessKey = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"
         , awsRegion = "us-east-1"
         , accessKeyId = ""
-        , service = ServiceIam
+        , timeout = Just 1234
         }
 
     sign
         awsConfig
+        ServiceIam
         requestDateTime
         { method = "GET"
         , query =
@@ -111,6 +112,7 @@ NOTE: this function is only exposed to allow testing
 -}
 sign :
     Config
+    -> Service
     -> Time.Posix
     ->
         { method : String
@@ -119,10 +121,10 @@ sign :
         , payload : String
         }
     -> Result String Signature
-sign config now request =
+sign config service now request =
     let
         url =
-            endpoint config
+            endpoint config service
 
         yyyymmddThhmmssz =
             DateFormat.format
@@ -155,7 +157,7 @@ sign config now request =
                     ]
 
         credentialScope =
-            String.join "/" [ yyyymmdd, config.awsRegion, serviceName config.service, "aws4_request" ]
+            String.join "/" [ yyyymmdd, config.awsRegion, serviceName service, "aws4_request" ]
 
         signedHeaders =
             canonicalHeaderKeys headers
@@ -182,7 +184,7 @@ sign config now request =
             Word.Bytes.fromUTF8 ("AWS4" ++ config.awsSecretAccessKey)
                 |> (\k -> Crypto.HMAC.digestBytes Crypto.HMAC.sha256 k (Word.Bytes.fromUTF8 yyyymmdd))
                 |> (\k -> Crypto.HMAC.digestBytes Crypto.HMAC.sha256 k (Word.Bytes.fromUTF8 config.awsRegion))
-                |> (\k -> Crypto.HMAC.digestBytes Crypto.HMAC.sha256 k (Word.Bytes.fromUTF8 (serviceName config.service)))
+                |> (\k -> Crypto.HMAC.digestBytes Crypto.HMAC.sha256 k (Word.Bytes.fromUTF8 (serviceName service)))
                 |> (\k -> Crypto.HMAC.digestBytes Crypto.HMAC.sha256 k (Word.Bytes.fromUTF8 "aws4_request"))
 
         result =

@@ -2,6 +2,10 @@
 
 Helper functions to create signed http requests to AWS, e.g. DynamoDB or IAM
 
+This package does not export any `Task` function, removing the ability to inject backdoors. It can only sign `UnsignedRequest` and return the necessary argument for `Http.task`.
+
+So, at most, you'd need only to verify the host of `url` in the returned `SignedRequest` record
+
 ``` elm
 -- Setup the request
 
@@ -25,11 +29,11 @@ rawRequest =
     , query = []
     , stringBody = stringBody
     , resolver = httpResolver
-    , timeout = httpTimeout
+    , service = AWS.ServiceDynamoDB
     }
 
 
--- If AWS.signRequest is successful, return a Task
+-- If AWS.signRequest is successful, give it to Http.task
 
 
 httpTask =

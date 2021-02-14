@@ -14,7 +14,7 @@ type alias Config =
     { awsSecretAccessKey : String
     , awsRegion : String
     , accessKeyId : String
-    , service : Service
+    , timeout : Maybe Float
     }
 
 
@@ -32,7 +32,7 @@ type alias UnsignedRequest x a =
     , query : List ( String, String )
     , stringBody : String
     , resolver : Http.Resolver x a
-    , timeout : Maybe Float
+    , service : Service
     }
 
 

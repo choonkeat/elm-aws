@@ -1,11 +1,11 @@
 module AWS.SES exposing
-    ( OutgoingMail(..), Response(..), sendOutgoingMail
+    ( OutgoingMail(..), Response(..), unsignedRequest
     , paramsForMail, decodeResponse
     )
 
 {-| Implementation of <https://docs.aws.amazon.com/ses/latest/DeveloperGuide/using-ses-api-requests.html>
 
-@docs OutgoingMail, Response, sendOutgoingMail
+@docs OutgoingMail, Response, unsignedRequest
 
 
 ## Tested internals
@@ -148,49 +148,43 @@ paramsForMail mail =
                 )
 
 
-{-| Task that sends email with SES, e.g.
+{-| Construct an `UnsignedRequest` for SES, e.g.
 
     import Http
-    import Task
-    import Time
-    import AWS.Types exposing (..)
+    import AWS.Types
 
-    awsCfg : AWS.Types.Config
-    awsCfg =
-        { awsSecretAccessKey = "topsecret"
-        , accessKeyId = "topsecret"
-        , awsRegion = "us-east-1"
-        , service = ServiceSES
-        }
+    unsignedResult : Result String (AWS.Types.UnsignedRequest Http.Error Response)
+    unsignedResult =
+        unsignedRequest
+            (Email
+                { from = "alice@example.com"
+                , to = [ "bob@example.com" ]
+                , replyTo = [ "donotreply@example.com" ]
+                , subject = "Test"
+                , textBody = "Message sent using SendEmail"
+                , htmlBody = "<p>Message sent using SendEmail</p>"
+                }
+            )
 
-    now : Time.Posix
-    now =
-        Time.millisToPosix 0
+    Result.map .method unsignedResult
+    --> Ok "POST"
 
-    sendOutgoingMail awsCfg now
-        { from = "alice@example.com"
-        , to = "bob@example.com"
-        , replyTo = "alice@example.com"
-        , subject = "Hi, I'd like to join your LinkedIn network."
-        , htmlBody = "<a href='/spam'>Report spam</a>"
-        }
+    Result.map .headers unsignedResult
+    --> Ok [("Content-Type","application/x-www-form-urlencoded")]
+
+    Result.map .stringBody unsignedResult
+    --> Ok "Action=SendEmail&Source=alice%40example.com&Message.Subject.Data=Test&Message.Body.Text.Data=Message%20sent%20using%20SendEmail&Message.Body.Html.Data=%3Cp%3EMessage%20sent%20using%20SendEmail%3C%2Fp%3E&Destination.ToAddresses.member.1=bob%40example.com&Destination.ReplyToAddresses.member.1=donotreply%40example.com"
+
+    Result.map .service unsignedResult
+    --> Ok AWS.Types.ServiceSES
+
+
+    usage config now unsignedResult =
+        unsignedResult
+            |> Result.andThen (AWS.signRequest config now)
+            |> Result.map Http.task
 
 -}
-sendOutgoingMail : AWS.Types.Config -> Time.Posix -> OutgoingMail -> Task Http.Error Response
-sendOutgoingMail awsConfig now outgoingMail =
-    let
-        signResult =
-            unsignedRequest outgoingMail
-                |> Result.andThen (AWS.signRequest { awsConfig | service = AWS.Types.ServiceSES } now)
-    in
-    case signResult of
-        Err err ->
-            Task.fail (Http.BadUrl err)
-
-        Ok task ->
-            Http.task task
-
-
 unsignedRequest : OutgoingMail -> Result String (UnsignedRequest Http.Error Response)
 unsignedRequest outgoingMail =
     let
@@ -206,7 +200,7 @@ unsignedRequest outgoingMail =
             , query = []
             , stringBody = stringBody
             , resolver = Http.stringResolver (AWS.Internal.decodeHttpResponse (Xml.Decode.decodeString decodeResponse) identity)
-            , timeout = Just 30000
+            , service = AWS.Types.ServiceSES
             }
     in
     paramsForMail outgoingMail
