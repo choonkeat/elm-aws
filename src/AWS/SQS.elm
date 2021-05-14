@@ -27,6 +27,7 @@ import Platform exposing (Task)
 import String exposing (toInt)
 import Task
 import Time
+import Url
 import Xml.Decode
 
 
@@ -83,10 +84,21 @@ paramsForMessages messages =
 
     import Http
     import AWS.Types
+    import Url
+
+    queueUrl : Url.Url
+    queueUrl =
+        { protocol = Url.Https
+        , host = "somequeue"
+        , port_ = Nothing
+        , path = "/123/queue.fifo"
+        , query = Nothing
+        , fragment = Nothing
+        }
 
     unsignedResult : AWS.Types.UnsignedRequest Http.Error Response
     unsignedResult =
-        unsignedRequest
+        unsignedRequest queueUrl
             [ OutgoingMessage
                 { body = "alpha message"
                 , attributes = [ { name = "nameA", type_ = "typeA", value = "valueA" }]
@@ -107,7 +119,7 @@ paramsForMessages messages =
     --> "Action=SendMessageBatch&SendMessageBatchRequestEntry.1.Id=0&SendMessageBatchRequestEntry.2.Id=1&SendMessageBatchRequestEntry.1.MessageBody=alpha%20message&SendMessageBatchRequestEntry.2.MessageBody=beta%20message"
 
     unsignedResult.service
-    --> AWS.Types.ServiceSQS
+    --> AWS.Types.ServiceSQS queueUrl
 
 
     usage config now unsignedResult =
@@ -116,8 +128,8 @@ paramsForMessages messages =
             |> Result.map Http.task
 
 -}
-unsignedRequest : List OutgoingMessage -> UnsignedRequest Http.Error Response
-unsignedRequest outgoingMessages =
+unsignedRequest : Url.Url -> List OutgoingMessage -> UnsignedRequest Http.Error Response
+unsignedRequest queueUrl outgoingMessages =
     let
         toUnsignedRequest params =
             let
@@ -131,7 +143,7 @@ unsignedRequest outgoingMessages =
             , query = []
             , stringBody = stringBody
             , resolver = Http.stringResolver (AWS.Internal.decodeHttpResponse (Xml.Decode.decodeString decodeResponse) identity)
-            , service = AWS.Types.ServiceSQS
+            , service = AWS.Types.ServiceSQS queueUrl
             }
     in
     paramsForMessages outgoingMessages

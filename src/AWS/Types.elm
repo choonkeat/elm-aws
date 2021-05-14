@@ -7,6 +7,7 @@ module AWS.Types exposing (Config, Service(..), SignedRequest, UnsignedRequest, 
 -}
 
 import Http
+import Url
 
 
 {-| -}
@@ -23,7 +24,7 @@ type Service
     = ServiceIam
     | ServiceDynamoDB
     | ServiceSES
-    | ServiceSQS
+    | ServiceSQS Url.Url
 
 
 {-| -}
