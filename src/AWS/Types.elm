@@ -23,6 +23,7 @@ type Service
     = ServiceIam
     | ServiceDynamoDB
     | ServiceSES
+    | ServiceSQS
 
 
 {-| -}

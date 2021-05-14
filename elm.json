@@ -3,11 +3,12 @@
     "name": "choonkeat/elm-aws",
     "summary": "Make signed REST api calls to AWS, e.g. DynamoDB",
     "license": "MIT",
-    "version": "3.0.0",
+    "version": "4.0.0",
     "exposed-modules": [
         "AWS",
         "AWS.DynamoDB",
         "AWS.SES",
+        "AWS.SQS",
         "AWS.Types"
     ],
     "elm-version": "0.19.1 <= v < 0.20.0",

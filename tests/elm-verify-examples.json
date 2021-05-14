@@ -3,6 +3,7 @@
   "tests": [
       "AWS.Internal",
       "AWS.SES",
+      "AWS.SQS",
       "AWS.DynamoDB"
    ]
 }

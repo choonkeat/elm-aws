@@ -37,6 +37,9 @@ endpoint { awsRegion } service =
         ServiceSES ->
             { urlWithoutRegion | host = serviceName service ++ "." ++ awsRegion ++ ".amazonaws.com" }
 
+        ServiceSQS ->
+            { urlWithoutRegion | host = serviceName service ++ "." ++ awsRegion ++ ".amazonaws.com" }
+
 
 serviceName : Service -> String
 serviceName service =
@@ -49,6 +52,9 @@ serviceName service =
 
         ServiceSES ->
             "email"
+
+        ServiceSQS ->
+            "sqs"
 
 
 algorithm =
