@@ -56,9 +56,11 @@ indexedTuples prefix suffix list =
         , ("SendMessageBatchRequestEntry.2.Id","1")
         , ("SendMessageBatchRequestEntry.1.MessageBody","alpha message")
         , ("SendMessageBatchRequestEntry.2.MessageBody","beta message")
+        , ("SendMessageBatchRequestEntry.1.MessageGroupId","MessageGroup123")
+        , ("SendMessageBatchRequestEntry.2.MessageGroupId","MessageGroup123")
         ]
 
-    paramsForMessages
+    paramsForMessages "MessageGroup123"
         [ OutgoingMessage
             { body = "alpha message"
             , attributes = [ { name = "nameA", type_ = "typeA", value = "valueA" }]
@@ -71,12 +73,13 @@ indexedTuples prefix suffix list =
     --> expectedParams
 
 -}
-paramsForMessages : List OutgoingMessage -> List ( String, String )
-paramsForMessages messages =
+paramsForMessages : String -> List OutgoingMessage -> List ( String, String )
+paramsForMessages messageGroupId messages =
     List.concat
         [ [ ( "Action", "SendMessageBatch" ) ]
         , indexedTuples "SendMessageBatchRequestEntry." ".Id" (List.indexedMap (\i _ -> String.fromInt i) messages)
         , indexedTuples "SendMessageBatchRequestEntry." ".MessageBody" (List.map (\(OutgoingMessage { body }) -> body) messages)
+        , indexedTuples "SendMessageBatchRequestEntry." ".MessageGroupId" (List.map (always messageGroupId) messages)
         ]
 
 
@@ -98,7 +101,7 @@ paramsForMessages messages =
 
     unsignedResult : AWS.Types.UnsignedRequest Http.Error Response
     unsignedResult =
-        unsignedRequest queueUrl
+        unsignedRequest queueUrl "messageGroupABC"
             [ OutgoingMessage
                 { body = "alpha message"
                 , attributes = [ { name = "nameA", type_ = "typeA", value = "valueA" }]
@@ -116,7 +119,7 @@ paramsForMessages messages =
     --> [("Content-Type","application/x-www-form-urlencoded")]
 
     unsignedResult.stringBody
-    --> "Action=SendMessageBatch&SendMessageBatchRequestEntry.1.Id=0&SendMessageBatchRequestEntry.2.Id=1&SendMessageBatchRequestEntry.1.MessageBody=alpha%20message&SendMessageBatchRequestEntry.2.MessageBody=beta%20message"
+    --> "Action=SendMessageBatch&SendMessageBatchRequestEntry.1.Id=0&SendMessageBatchRequestEntry.2.Id=1&SendMessageBatchRequestEntry.1.MessageBody=alpha%20message&SendMessageBatchRequestEntry.2.MessageBody=beta%20message&SendMessageBatchRequestEntry.1.MessageGroupId=messageGroupABC&SendMessageBatchRequestEntry.2.MessageGroupId=messageGroupABC"
 
     unsignedResult.service
     --> AWS.Types.ServiceSQS queueUrl
@@ -128,8 +131,8 @@ paramsForMessages messages =
             |> Result.map Http.task
 
 -}
-unsignedRequest : Url.Url -> List OutgoingMessage -> UnsignedRequest Http.Error Response
-unsignedRequest queueUrl outgoingMessages =
+unsignedRequest : Url.Url -> String -> List OutgoingMessage -> UnsignedRequest Http.Error Response
+unsignedRequest queueUrl messageGroupId outgoingMessages =
     let
         toUnsignedRequest params =
             let
@@ -146,7 +149,7 @@ unsignedRequest queueUrl outgoingMessages =
             , service = AWS.Types.ServiceSQS queueUrl
             }
     in
-    paramsForMessages outgoingMessages
+    paramsForMessages messageGroupId outgoingMessages
         |> toUnsignedRequest
 
 
