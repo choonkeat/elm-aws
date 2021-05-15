@@ -6,6 +6,7 @@ import Crypto.HMAC
 import Crypto.Hash
 import DateFormat
 import Http
+import Iso8601
 import Json.Decode
 import Json.Encode
 import Task exposing (Task)
@@ -334,3 +335,17 @@ decodeHttpResponse decode errorToString resp =
             decode s
                 -- best effort attempt to decode the response body, but fallback to `Http.BadStatus`
                 |> Result.mapError (always (Http.BadStatus m.statusCode))
+
+
+decodeTimePosix : Json.Decode.Decoder Time.Posix
+decodeTimePosix =
+    Json.Decode.string
+        |> Json.Decode.andThen
+            (\string ->
+                case Iso8601.toTime string of
+                    Ok value ->
+                        Json.Decode.succeed value
+
+                    _ ->
+                        Json.Decode.fail ("Invalid ISO 8601 time: " ++ string)
+            )
