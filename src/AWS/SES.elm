@@ -107,7 +107,7 @@ givenEmail =
         , ( "Message.Body.Text.Data", "Message sent using SendEmail" )
         , ( "Message.Body.Html.Data", "<p>Message sent using SendEmail</p>" )
         , ( "Destination.ToAddresses.member.1", "bob@example.com" )
-        , ( "Destination.ReplyToAddresses.member.1", "donotreply@example.com" )
+        , ( "ReplyToAddresses.member.1", "donotreply@example.com" )
         ]
 
     paramsForMail (Email givenEmailDetail)
@@ -143,7 +143,7 @@ paramsForMail mail =
                       , ( "Message.Body.Html.Data", htmlBody )
                       ]
                     , indexedTuples "Destination.ToAddresses.member." to
-                    , indexedTuples "Destination.ReplyToAddresses.member." replyTo
+                    , indexedTuples "ReplyToAddresses.member." replyTo
                     ]
                 )
 
@@ -173,7 +173,7 @@ paramsForMail mail =
     --> Ok [("Content-Type","application/x-www-form-urlencoded")]
 
     Result.map .stringBody unsignedResult
-    --> Ok "Action=SendEmail&Source=alice%40example.com&Message.Subject.Data=Test&Message.Body.Text.Data=Message%20sent%20using%20SendEmail&Message.Body.Html.Data=%3Cp%3EMessage%20sent%20using%20SendEmail%3C%2Fp%3E&Destination.ToAddresses.member.1=bob%40example.com&Destination.ReplyToAddresses.member.1=donotreply%40example.com"
+    --> Ok "Action=SendEmail&Source=alice%40example.com&Message.Subject.Data=Test&Message.Body.Text.Data=Message%20sent%20using%20SendEmail&Message.Body.Html.Data=%3Cp%3EMessage%20sent%20using%20SendEmail%3C%2Fp%3E&Destination.ToAddresses.member.1=bob%40example.com&ReplyToAddresses.member.1=donotreply%40example.com"
 
     Result.map .service unsignedResult
     --> Ok AWS.Types.ServiceSES
