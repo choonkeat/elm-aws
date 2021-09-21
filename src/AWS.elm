@@ -21,6 +21,7 @@ type AWSTarget
     | DynamoDB_PutItem
     | DynamoDB_DeleteItem
     | DynamoDB_Query
+    | DynamoDB_Scan
 
 
 {-| Adds necessary `X-Amz-Target` http request header
@@ -45,6 +46,9 @@ awsTargetHeader target =
 
                         DynamoDB_Query ->
                             "Query"
+
+                        DynamoDB_Scan ->
+                            "Scan"
                    )
     in
     ( "X-Amz-Target", value )
