@@ -25,6 +25,7 @@ type Service
     | ServiceDynamoDB
     | ServiceSES
     | ServiceSQS Url.Url
+    | ServiceCustom String Url.Url
 
 
 {-| -}

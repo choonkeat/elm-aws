@@ -41,6 +41,9 @@ endpoint { awsRegion } service =
         ServiceSQS url ->
             url
 
+        ServiceCustom _ url ->
+            url
+
 
 serviceName : Service -> String
 serviceName service =
@@ -56,6 +59,9 @@ serviceName service =
 
         ServiceSQS _ ->
             "sqs"
+
+        ServiceCustom name _ ->
+            name
 
 
 algorithm =
