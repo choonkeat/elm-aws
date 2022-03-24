@@ -25,6 +25,7 @@ type Service
     | ServiceDynamoDB
     | ServiceSES
     | ServiceSQS Url.Url
+    | ServiceS3 Url.Url
     | ServiceCustom String Url.Url
 
 
@@ -57,4 +58,6 @@ type alias Signature =
     , headers : List ( String, String )
     , signedHeaders : String
     , algorithm : String
+    , debugCanonicalString : String
+    , debugStringToSign : String
     }

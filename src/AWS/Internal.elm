@@ -41,6 +41,9 @@ endpoint { awsRegion } service =
         ServiceSQS url ->
             url
 
+        ServiceS3 url ->
+            url
+
         ServiceCustom _ url ->
             url
 
@@ -59,6 +62,9 @@ serviceName service =
 
         ServiceSQS _ ->
             "sqs"
+
+        ServiceS3 _ ->
+            "s3"
 
         ServiceCustom name _ ->
             name
@@ -86,6 +92,7 @@ authorizationHeader config signature =
 {-| Signing AWS requests with Signature Version 4 <https://docs.aws.amazon.com/general/latest/gr/sigv4_signing.html>
 
     import Time
+    import Url
     import AWS.Types exposing (..)
 
     nowMillisecond : Int
@@ -119,6 +126,26 @@ authorizationHeader config signature =
         , payload = ""
         } |> Result.map .text
     --> Ok "5d672d79c15b13162d9279b0855cfba6789a8edb4c82c400e06b5924a6f2b5d7"
+
+    "https://aabbccddee.execute-api.us-east-1.amazonaws.com/prod/%40connections/R0oXAdfD0kwCH6w%3D"
+    |> Url.fromString
+    |> Result.fromMaybe "Bad url"
+    |> Result.andThen
+        (\url ->
+            sign
+                awsConfig
+                (ServiceCustom "execute-api" url)
+                requestDateTime
+                { method = "POST"
+                , query = []
+                , headers = []
+                , payload = "Hello"
+                }
+        )
+    |> Result.map (\{ debugCanonicalString, debugStringToSign } -> (debugCanonicalString, debugStringToSign))
+    --> Ok ("POST\n/prod/%2540connections/R0oXAdfD0kwCH6w%253D\n\nhost:aabbccddee.execute-api.us-east-1.amazonaws.com\nx-amz-date:20150830T123600Z\n\nhost;x-amz-date\n185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969","AWS4-HMAC-SHA256\n20150830T123600Z\n20150830/us-east-1/execute-api/aws4_request\n57bbd8490b434de574af7956de44808216ccac30c210f87e352623100aad0e65")
+
+    -- notice `%2540connections` double escaped
 
 NOTE: this function is only exposed to allow testing
 
@@ -175,10 +202,22 @@ sign config service now request =
         signedHeaders =
             canonicalHeaderKeys headers
 
+        canonicalUri =
+            -- Normalize URI paths according to RFC 3986. Remove redundant and relative path components.
+            -- Each path segment must be URI-encoded twice (except for Amazon S3 which only gets URI-encoded once).
+            case service of
+                ServiceS3 _ ->
+                    url.path
+
+                _ ->
+                    String.split "/" url.path
+                        |> List.map Url.percentEncode
+                        |> String.join "/"
+
         canonicalRequest =
             String.join "\n"
                 [ request.method
-                , url.path
+                , canonicalUri
                 , canonicalQuery request.query
                 , canonicalHeaders headers
                 , signedHeaders
@@ -222,6 +261,8 @@ sign config service now request =
                 , headers = headers
                 , signedHeaders = signedHeaders
                 , algorithm = algorithm
+                , debugCanonicalString = canonicalRequest
+                , debugStringToSign = stringToSign
                 }
 
 
